@@ -28,11 +28,16 @@ const AMPL = {
     address: '0xd46ba6d942050d489dbd938a2c909a5d5039a161'
 }
 
+const WBTC = {
+    symbol: 'WBTC',
+    address: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599'
+}
+
 const erc20s = {
     ETH, DAI,
     MKR,
     KNC,
-    LINK,AMPL
+    LINK,AMPL,WBTC
 }
 
 function forTokens(inputToken, outputToken, inputAmount){
@@ -47,4 +52,4 @@ function forTokens(inputToken, outputToken, inputAmount){
       };
 }
 
-exports.forTokens = forTokens;
+module.exports = {forTokens};

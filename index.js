@@ -1,17 +1,9 @@
 require('dotenv').config()
 const express = require('express')
-const bodyParser = require('body-parser')
 const http = require('http')
 const Web3 = require('web3')
-const HDWalletProvider = require('@truffle/hdwallet-provider')
-const moment = require('moment-timezone')
-const numeral = require('numeral')
-const _ = require('lodash')
-const axios = require('axios')
-const { uniswapFactoryContract, UNISWAP_EXCHANGE_ABI } = require("./exchange/uniswap")
-const { kyberRateContract } = require("./exchange/kyber");
-const {forTokens} = require('./coins/erc20');
-const {uniswapV2Factory} = require('./exchange/uniswapv2');
+const {checkPair} = require('./checkPair');
+const {forTokens} = require('./coins/erc20')
 
 // SERVER CONFIG
 const PORT = process.env.PORT || 5000
@@ -21,27 +13,6 @@ const server = http.createServer(app).listen(PORT, () => console.log(`Listening 
 // WEB3 CONFIG
 const web3 = new Web3(process.env.RPC_URL)
 exports.web3 = web3
-
-async function checkPair(args) {
-  const { inputTokenSymbol, inputTokenAddress, outputTokenSymbol, outputTokenAddress, inputAmount } = args
-  const uniswapV2 = uniswapV2Factory({symbol:inputTokenSymbol, address: inputTokenAddress},
-    {symbol:outputTokenSymbol, address: outputTokenAddress});
-  const uv2Value = await uniswapV2.getPrice();
-  const exchangeAddress = await uniswapFactoryContract.methods.getExchange(outputTokenAddress).call()
-  // const uniswap = new web3.eth.Contract(UNISWAP_EXCHANGE_ABI, exchangeAddress);
-  const uniswapResult = await uniswap.methods.getEthToTokenInputPrice(inputAmount).call()
-  let kyberResult = await kyberRateContract.methods.getExpectedRate(inputTokenAddress, outputTokenAddress, inputAmount, true).call()
-
-  console.table([{
-    'Input Token': inputTokenSymbol,
-    'Output Token': outputTokenSymbol,
-    'Input Amount': web3.utils.fromWei(inputAmount, 'Ether'),
-    'Uniswap Return': uv2Value.mid,
-    'Kyber Expected Rate': web3.utils.fromWei(kyberResult.expectedRate, 'Ether'),
-    'Kyber Min Return': web3.utils.fromWei(kyberResult.slippageRate, 'Ether'),
-    'Timestamp': moment().tz('America/Chicago').format(),
-  }])
-}
 
 let priceMonitor
 let monitoringPrice = false
@@ -56,7 +27,8 @@ async function monitorPrice() {
 
   try {
 
-    await checkPair(forTokens("AMPL", "ETH", web3.utils.toWei('1', 'ETHER')));
+    await checkPair(forTokens("DAI", "WBTC", web3.utils.toWei('1', 'ETHER')));
+    await checkPair(forTokens("ETH", "WBTC", web3.utils.toWei('1', 'ETHER')));
     await checkPair(forTokens("ETH", "DAI", web3.utils.toWei('1', 'ETHER')));
     await checkPair(forTokens("ETH", "KNC", web3.utils.toWei('1', 'ETHER')));
     await checkPair(forTokens("ETH", "LINK", web3.utils.toWei('1', 'ETHER')));
